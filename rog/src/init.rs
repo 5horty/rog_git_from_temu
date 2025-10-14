@@ -23,7 +23,7 @@ impl GitRepo {
         if gitdir.exists() {
             println!("already exists");
         } else {
-            fs::create_dir(cwd.join(".git")).expect("failed to initailsed");
+            fs::create_dir_all(cwd.join(".git")).expect("failed to initailsed");
         }
         let mut conf = ini::Ini::new();
         let cf = gitdir.join("config");
