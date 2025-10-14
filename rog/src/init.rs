@@ -25,6 +25,11 @@ impl GitRepo {
         } else {
             fs::create_dir_all(cwd.join(".git")).expect("failed to initailsed");
         }
+        if !cwd.exists() {
+            fs::create_dir_all(&cwd).expect("failed to create dir");
+        } else if !cwd.is_dir() {
+            panic!("failed to creaete is not a dir");
+        }
         let mut conf = ini::Ini::new();
         let cf = gitdir.join("config");
         if cf.exists() {
@@ -35,11 +40,16 @@ impl GitRepo {
             conf.set("core", "bare", Some("false".to_owned()));
             conf.write(&cf).expect("failed to write default config");
         }
-        Self {
+        let repo = Self {
             worktree: Some(cwd),
             gitdir: Some(gitdir),
             conf: Some(conf),
-        }
+        };
+        Self::repo_dir(&repo, &["branches"], true);
+        Self::repo_dir(&repo, &["objects"], true);
+        Self::repo_dir(&repo, &["refs", "tags"], true);
+        Self::repo_dir(&repo, &["refs", "heads"], true);
+        repo
     }
     pub fn repo_path(&self, components: &[&str]) -> Option<path::PathBuf> {
         let gitdir = self.gitdir.as_ref()?;
