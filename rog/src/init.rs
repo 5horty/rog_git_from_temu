@@ -41,6 +41,39 @@ impl GitRepo {
             conf: Some(conf),
         }
     }
+    pub fn repo_path(&self, components: &[&str]) -> Option<path::PathBuf> {
+        let gitdir = self.gitdir.as_ref()?;
+        let mut path = gitdir.clone();
+        for comp in components {
+            path = path.join(comp);
+        }
+        Some(path)
+    }
+    pub fn repo_dir(&self, components: &[&str], mkdir: bool) -> Option<path::PathBuf> {
+        let gitdir = self.gitdir.as_ref()?;
+        let mut path = gitdir.clone();
+        for comp in components {
+            path = path.join(comp);
+        }
+        if path.exists() {
+            if path.is_dir() {
+                return Some(path);
+            } else {
+                panic!("not a dir{path:?}");
+            }
+        }
+        if mkdir {
+            fs::create_dir_all(&path).ok()?;
+        }
+        Some(path)
+    }
+
+    pub fn repo_file(&self, components: &[&str], mkdir: bool) -> Option<path::PathBuf> {
+        let parent = &components[..components.len() - 1];
+        self.repo_dir(parent, mkdir)?;
+        self.repo_path(parent)
+    }
+
     pub fn add() {
         todo!();
     }
