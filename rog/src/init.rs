@@ -71,7 +71,7 @@ impl GitRepo {
     pub fn repo_file(&self, components: &[&str], mkdir: bool) -> Option<path::PathBuf> {
         let parent = &components[..components.len() - 1];
         self.repo_dir(parent, mkdir)?;
-        self.repo_path(parent)
+        self.repo_path(components)
     }
 
     pub fn add() {
