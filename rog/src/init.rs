@@ -2,6 +2,7 @@ use configparser::ini;
 use std::env;
 use std::fs;
 use std::path;
+use std::path::PathBuf;
 
 pub struct GitRepo {
     worktree: Option<path::PathBuf>,
@@ -16,8 +17,17 @@ impl GitRepo {
             conf: None,
         }
     }
-    pub fn init() -> Self {
-        let cwd = env::current_dir().expect("smt went wrong getting cwd");
+    pub fn init(path: String) -> Self {
+        let mut temp: path::PathBuf = path.parse::<path::PathBuf>().unwrap().clone();
+        if path.starts_with("/") {
+            temp = path
+                .strip_prefix("/")
+                .unwrap()
+                .parse::<path::PathBuf>()
+                .unwrap();
+        }
+        let cwd = env::current_dir().expect("failed to get dir").join(temp);
+        println!("cwd path {cwd:?}");
         let gitdir = cwd.join(".git");
         println!("{cwd:?}");
         if gitdir.exists() {
@@ -49,6 +59,11 @@ impl GitRepo {
         Self::repo_dir(&repo, &["objects"], true);
         Self::repo_dir(&repo, &["refs", "tags"], true);
         Self::repo_dir(&repo, &["refs", "heads"], true);
+
+        let desc_file = Self::repo_file(&repo, &["description"], true).unwrap();
+        fs::write(desc_file, "unnamed file edit to chanage").expect("failed to write desc");
+        let head_file = Self::repo_file(&repo, &["HEAD"], true).unwrap();
+        fs::write(head_file, "ref: refs/heads/master\n").expect("failed to write head");
         repo
     }
     pub fn repo_path(&self, components: &[&str]) -> Option<path::PathBuf> {
@@ -93,6 +108,6 @@ mod test {
     use super::*;
     #[test]
     fn is() {
-        todo!();
+        todo!(); // pass in python
     }
 }
