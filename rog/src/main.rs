@@ -1,6 +1,8 @@
 use clap::{Arg, ArgAction, Command, command};
 use std::{env, path};
+mod Rogblob;
 mod init;
+mod rogObject;
 fn main() {
     let matches = command!()
         .subcommand(
