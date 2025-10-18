@@ -1,6 +1,7 @@
 use clap::{Arg, ArgAction, Command, command};
 use std::{env, path};
 mod Rogblob;
+mod Rogcommit;
 mod init;
 mod rogObject;
 fn main() {

@@ -108,6 +108,6 @@ mod test {
     use super::*;
     #[test]
     fn is() {
-        todo!(); // pass in python
+        todo!(); // idk what to test + tests arr for smuchts
     }
 }

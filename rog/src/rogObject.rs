@@ -1,12 +1,16 @@
-use crate::Rogblob::{self};
+use crate::Rogblob::RogBlob;
 use crate::init::{self, GitRepo};
-use flate2::{Compression, bufread::ZlibEncoder, read::ZlibDecoder};
+use flate2::{Compression, read::ZlibDecoder, write::ZlibEncoder};
+use sha1::{Digest, Sha1};
+use std::io;
+use std::io::Write;
 use std::str::from_utf8;
-use std::{fs, io::Read};
+use std::{fs, fs::File, io::Read};
 pub trait rogObject {
     fn serialize(&self) -> Vec<u8>;
     fn deserialize(&mut self, data: &[u8]);
     fn init(&mut self);
+    fn fmt(&self) -> &str;
 }
 
 fn object_read(repo: &GitRepo, sha: &str) -> Option<Box<dyn rogObject>> {
@@ -34,4 +38,37 @@ fn object_read(repo: &GitRepo, sha: &str) -> Option<Box<dyn rogObject>> {
         _ => panic!("wrong cmd"),
     };
     Some(obj)
+}
+fn object_write(repo: &GitRepo, obj: &dyn rogObject) -> io::Result<String> {
+    //serialize data
+    let data = obj.serialize();
+    // rebuild thr rog obj
+    let header = format!("{} {}\0", obj.fmt(), data.len());
+    let mut full = Vec::new();
+    full.extend_from_slice(header.as_bytes());
+    full.extend_from_slice(&data);
+
+    //get hash
+    let mut hasher = Sha1::new();
+    hasher.update(&full);
+    let sha = format!("{:x}", hasher.finalize());
+
+    //build the path for the obj
+    let dir = &sha[0..2];
+    let file = &sha[2..];
+    let path = repo
+        .repo_file(&["objects", dir, file], true)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "file path invalid"))?;
+
+    if !path.exists() {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        let f = File::create(&path)?;
+        let mut encoder = ZlibEncoder::new(f, Compression::default());
+        encoder.write_all(&full)?;
+        encoder.finish()?;
+    }
+    Ok(sha)
 }
