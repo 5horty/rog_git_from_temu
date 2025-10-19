@@ -3,6 +3,7 @@ use std::{env, path};
 mod Rogblob;
 mod Rogcommit;
 mod init;
+mod repo_find;
 mod rogObject;
 mod rogcat;
 fn main() {
