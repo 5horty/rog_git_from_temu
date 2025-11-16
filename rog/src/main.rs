@@ -34,6 +34,15 @@ fn main() -> std::io::Result<()> {
                     Arg::new("object")
                         .help("the object to diplay")
                         .required(true),
+                )
+                .arg(
+                    Arg::new("format")
+                        .short('f')
+                        .long("format")
+                        .help("output format: t = type, p = print content")
+                        .required(false)
+                        .default_value("p")
+                        .value_parser(["t", "p"]),
                 ),
         )
         .subcommand(
@@ -54,7 +63,8 @@ fn main() -> std::io::Result<()> {
         Some(("cat", sub_m)) => {
             let typ = sub_m.get_one::<String>("type").unwrap();
             let obj = sub_m.get_one::<String>("object").unwrap();
-            if let Err(e) = rogcat::cmd_cat_file(typ, obj) {
+            let fmt = sub_m.get_one::<String>("format").unwrap();
+            if let Err(e) = rogcat::cmd_cat_file(typ, obj, Some(fmt.as_str())) {
                 println!("{}", e);
             }
         }
