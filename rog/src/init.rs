@@ -1,13 +1,14 @@
 use configparser::ini;
 use std::env;
 use std::fs;
+use std::io;
 use std::path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct GitRepo {
-    worktree: Option<path::PathBuf>,
-    gitdir: Option<path::PathBuf>,
-    conf: Option<ini::Ini>,
+    pub worktree: Option<path::PathBuf>,
+    pub gitdir: Option<path::PathBuf>,
+    pub conf: Option<ini::Ini>,
 }
 impl GitRepo {
     pub fn defualt() -> Self {
@@ -101,6 +102,34 @@ impl GitRepo {
 
     pub fn add() {
         todo!();
+    }
+    pub fn find_file(path: Option<&Path>) -> io::Result<Self> {
+        let mut path = match path {
+            Some(path) => path.to_path_buf(),
+            None => env::current_dir()?,
+        };
+        loop {
+            let gitdir = path.join(".git");
+            if gitdir.is_dir() {
+                let conf_path = gitdir.join("config");
+                let mut conf = ini::Ini::new();
+                if conf_path.exists() {
+                    let _ = conf.load(&conf_path);
+                }
+                return Ok(Self {
+                    worktree: Some(path.clone()),
+                    gitdir: Some(gitdir),
+                    conf: Some(conf),
+                });
+            }
+            if !path.pop() {
+                break;
+            }
+        }
+        Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "not found git repo",
+        ))
     }
 }
 #[cfg(test)]

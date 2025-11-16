@@ -13,7 +13,7 @@ pub trait rogObject {
     fn fmt(&self) -> &str;
 }
 
-fn object_read(repo: &GitRepo, sha: &str) -> Option<Box<dyn rogObject>> {
+pub fn object_read(repo: &GitRepo, sha: &str) -> Option<Box<dyn rogObject>> {
     let path = repo.repo_file(&["objects", &sha[0..2], &sha[2..]], false)?; // getting the dir 2 then file the last bytes
     let data = fs::read(path).ok()?;
     let mut raw = ZlibDecoder::new(&data[..]);
@@ -26,20 +26,22 @@ fn object_read(repo: &GitRepo, sha: &str) -> Option<Box<dyn rogObject>> {
         .ok()?
         .parse::<usize>()
         .ok()?; // getting the rest
-    if size != decompressed.len() - (rest - 1) {
+    let content = &decompressed[rest + 1..];
+    if size != content.len() {
+        //- (rest - 1)
+
         panic!("failed malformed rog object");
     }
-    let content = &decompressed[rest + 1..];
     let obj: Box<dyn rogObject> = match fmt {
         b"blob" => Box::new(RogBlob::from_bytes(content)),
-        b"commit" => Box::new(RogCommit::from_bytes(content)),
-        b"tree" => Box::new(RogTree::from_bytes(content)),
-        b"tag" => Box::new(RogTag::from_bytes(content)),
+        b"commit" => todo!(), //Box::new(RogCommit::from_bytes(content)),
+        b"tree" => todo!(),   //Box::new(RogTree::from_bytes(content)),
+        b"tag" => todo!(),    //Box::new(RogTag::from_bytes(content)),
         _ => panic!("wrong cmd"),
     };
     Some(obj)
 }
-fn object_write(repo: &GitRepo, obj: &dyn rogObject) -> io::Result<String> {
+pub fn object_write(repo: &GitRepo, obj: &dyn rogObject) -> io::Result<String> {
     //serialize data
     let data = obj.serialize();
     // rebuild thr rog obj

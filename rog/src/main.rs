@@ -6,7 +6,13 @@ mod init;
 mod repo_find;
 mod rogObject;
 mod rogcat;
-fn main() {
+use Rogblob::RogBlob;
+use init::GitRepo;
+fn main() -> std::io::Result<()> {
+    let repo = GitRepo::find_file(None)?;
+
+    // Create a blob
+
     let matches = command!()
         .subcommand(
             Command::new("init").about("create a new git repo").arg(
@@ -30,6 +36,13 @@ fn main() {
                         .required(true),
                 ),
         )
+        .subcommand(
+            Command::new("blob").about("create a blob").arg(
+                Arg::new("data")
+                    .help("data to store in blob")
+                    .required(true),
+            ),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -41,7 +54,18 @@ fn main() {
         Some(("cat", sub_m)) => {
             let typ = sub_m.get_one::<String>("type").unwrap();
             let obj = sub_m.get_one::<String>("object").unwrap();
+            if let Err(e) = rogcat::cmd_cat_file(typ, obj) {
+                println!("{}", e);
+            }
+        }
+        Some(("blob", sub_m)) => {
+            let repo = GitRepo::find_file(None)?;
+            let data = sub_m.get_one::<String>("data").unwrap().as_bytes().to_vec();
+            let blob = RogBlob::from_bytes(&data);
+            let sha = rogObject::object_write(&repo, &blob)?;
+            println!("Created blob with SHA: {}", sha);
         }
         _ => println!("no cmd used"),
     };
+    Ok(())
 }

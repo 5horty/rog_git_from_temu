@@ -4,8 +4,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 pub struct Repo {
-    worktree: Option<PathBuf>,
-    gitdir: Option<PathBuf>,
+    pub worktree: Option<PathBuf>,
+    pub gitdir: Option<PathBuf>,
 }
 impl Repo {
     pub fn find_file(path: Option<&Path>) -> io::Result<Self> {
